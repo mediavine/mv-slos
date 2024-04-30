@@ -1,0 +1,23 @@
+---
+version: "prometheus/v1"
+service: "pubapps-dashboard-api"
+labels:
+  owner: "Pubapps"
+  repo: "mediavine/dashboard-api"
+  tier: "2"
+slos:
+  # We allow failing (5xx and 429) 1 request every 1000 requests (99.9%).
+  - name: "requests-availability-reports-earnings-endpoint"
+    objective: 98.50
+    description: "Common SLO based on availability for HTTP request responses for reports/metrics/earnings."
+    sli:
+      events:
+        error_query: sum(round(rate(http_server_duration_count{http_route=~"/api/v1/sites/:site_id/reports/metrics/earnings",http_status_code=~"(5..|429)"}[{{.window}}]) * 100))
+        total_query: sum(round(rate(http_server_duration_count{http_route=~"/api/v1/sites/:site_id/reports/metrics/earnings"}[{{.window}}]) * 100))
+    alerting:
+      name: PubAppsDashboardApiHighErrorRate-ReportingMetricsEarningsEndpoint
+      labels:
+        category: "availability"
+      annotations:
+        # Overwrite default Sloth SLO alert summmary on ticket and page alerts.
+        summary: "High error rate on 'pubapps-dashboard-api' requests responses"
